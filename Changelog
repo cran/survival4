@@ -1,0 +1,223 @@
+10/14/94:  Add the 1950 data to the survexp.mnwhite data set.
+
+
+11/9/94:
+    Small change in survdiff2.c suggested by Steve Kaluzny.  Change an
+"if (a &b)" to  "if (b && a)" to avoid referencing beyond an array.
+
+    Bug fixes to survexp.cfit.s, residuals.coxph.s and coxph.detail.s.  If
+there was a death at time 0 the computation would be wrong.
+
+
+11/22/94:
+    Add as.matrix method to ratetable.s.
+
+    Add the year 1990 and 2000 extrapolated data to all of the rate tables.
+This is discussed fully in Biostatistics technical report #55.
+
+    Change the imputation for 1970 Arizona non-white.  Lacking the data, and
+because I needed to make an array out of it plus the white data (which has
+1970), I had used the 1970 white data as an approximation.  This was a bad
+idea; white and non-white are very different, and a plot that I happened to
+do pointed this out.  Instead, I have just replicated the 1980 non-white
+data into 1970 non-white.
+
+
+11/25/94:
+    Finish the code for survexp, Cox model, individual expected survival.
+    Add a test case "expect3".
+
+
+12/14/94:
+    Make an efficiency improvement in plot.survfit and lines.survfit.  When
+there is censoring and few deaths, so the plot has long horizontal segments
+with many "+' signs, the prior code would pass coordinate sets like
+	x= a,b,c,d,e,f,g,....
+	y= l,m,m,m,m,m,n,....
+to the underlying plot routines.  I now delete the redundant m's in in the
+middle of this sequence.  The prior behavior could muddy up the look of
+dashed or dotted lines, besides being incredibly slow.
+
+
+12/28/94:
+    Make an explicit check for the singularity flag (diagonal elements =0) in
+chinv2.c.  In the old version round off error could cause these elements to
+become not exactly 0, and the warning message for singularity (in the .s
+routine) would not be triggered.  I noticed this in the printout of a
+model with extra dummy vars that I knew was singular.  Add one more test
+case to the library.
+
+
+12/29/94:
+    The coxph.detail routine had an incorrect call to coxph.getdata (it
+refered to a non-existent arg).
+
+
+12/29/94:
+    Consider the following 2 models:
+      fit1 _ coxph(Surv(time, status)~  x + strata(epoch), test2, weight=dummy)
+      fit2 _ coxph(Surv(time, status)~  x + strata(epoch), test2, weight=epoch)
+and assume that dummy==epoch = integers.  The second model will fail, but
+the first works ok.  It seems that if the weight variable is also in a
+strata statement (and only then) the result of "model.extract" has storage
+mode integer instead of double.  The fix was to add as.double() to my .C
+calls in coxph.fit and agreg.fit.  Since I don't see any logical use for a
+model like fit2 above I don't expect this bug to effect anyone, but changed
+it anyway.  I have NO explanation for the S behavior, not even a guess.
+
+
+1/17/94: Fix title error in survfit.object.d, as pointed out by S Kaluzny.
+
+1/23/94: The year 1990 and 2000 extrapolated data was wrong for the
+usr and azr tables (I confused row major & column major order).  We now agree
+with Jan Offord's SAS implimentation.
+
+1/24/94:  In ratetable.s, add an error message for invalid subscripts (it's
+easy to type 'survexp.us[0,,]' thinking that this will list data for age 0).
+Add a print method, mainly to stop the annoying listing of attributes that
+trails the table.
+
+1/27/95:  Minor bug in survexp; if y was a Surv object it would choke with
+a spurious error message.
+
+1/31/95:  Error in [.ratetable:  the result of 'survexp.uswhite[,,1:2]' was
+not a ratetable, due to a misunderstanding of what list(...) would produce.
+Also, added a check to is.ratetable to ensure that cutpoints are in
+ascending order.
+
+2/2/95: Found by Steve Kaluzny -- in survreg an attempted use of the
+'init' argument led to a syntax error.
+
+
+2/7/95:  Bug in the summary function of survexp.uswhite, found by Brian
+Ripley.  (I counted the males twice, and then printed a table labeled M & F).
+
+
+2/25/95: Minor problem found by Frank Harrell.  The 'dfbeta' residual for
+a univariate Cox model is returned as a matrix, but all others will be
+a vector.  The 'dfbetas' residual fails (but it's the same oversight).
+
+2/28/95: Fix bug found by Frank Harrell.  The summary.survfit function could
+fail with a memory execption if the survival object was a matrix and an
+explicit time was requested.  (The temp variable "n" should be the number
+of rows of surv, not its length).
+
+    Second bug (also Frank).  If more than one variable is going to infinity,
+the warning message only mentions one of them.  Also the warning() function
+complains, because it was being handed a vector of error messages.
+
+
+3/14/95: Fix misc errors in survexp.  The main one: when I added individual
+survival as an option for Cox models, I accidentally made it so that you
+always got individual survival.  Added a set of test cases to 'expect3.s'
+to avoid such in the future.
+
+3/14/95: Another error found by Frank -- the robust=T option of coxph leads
+to a syntax error.  Add a test case to doovarain.s, which also turned up
+a bug in residuals (needed to use naive.var instead of 'var' for a robust
+model).
+
+---- at this point Statsci obtained a copy of my code  -------
+
+5/23/95: Added a subscript method for survfit objects.  This makes it easy
+to plot a subset of curves, when the object contains multiples.
+
+6/8/95: Change the standard error formula in plot.cox.zph.s, following the
+published correction in the appendix of my and Pat's paper.  The increase
+in width is only on the order of (d+1)/d, where d=number of deaths.
+
+6/21/95: Fix bug in coxph.s.  If the cluster() argument was used along with
+the efron approx, it returned the robust variance using a breslow
+approximation instead.  The numerical effect of the error was usually very
+small.
+
+7/26/95: Fix bug in print.summary.survreg -- the 'digits' option was changed
+permantly if specified.
+	 Many updates to the help files: over half of them were corrections
+suggested by StatSci.
+
+
+7/28/95: The 'strata' value returned by coxph.detail was incorrect.  (It's
+almost never useful, however).
+
+
+9/1/95: Small bug in coxph.fit.s, pointed out by Dan Sargent.  If `x' was
+a vector then nvar=0. (Only arose when coxph.fit was called directly, without
+using coxph).
+
+10/25/95:  Correct the robust variance when there are case weights in coxph.
+It should be D'WWD, where W is the diagonal matrix of weights, and I was
+returning the unweighted form D'D.
+
+10/27/95:  Added one more check to is.ratetable.  On-the-fly interpolation
+only is valid for the last dimension of a ratetable (a design constraint in
+pystep.c that would be much work to loosen), so return F for any ratetable
+that requests such interpolation inappropriately.  None of the rate tables in
+the current distribution or examples are affected by this.
+
+12/22/95: Fix a minor bug found by Dick Repasky; with 'interval2' type data
+the Surv routine would reject an exact (uncensored) survival time as
+illegal.
+
+12/22/95: The 9/1/95 repair caused null models, Surv(time, stat) ~1, to
+fail.  This must be the umpteenth time I've replaced is.null(x) with
+length(x)==0 somewhere in the code so as to properly handle a numeric(0)
+vector; you'ld think I'd learn!
+
+12/22/95: Documentation error in survexp.d: the 'conditional' argument had
+the wrong default.
+
+12/22/95: Added a computation of the intra-class correlation coefficient to
+Cox models with the cluster() argument, and to the printout.
+
+12/27/95: Add a subscript method to cox.zph.  This makes it much easier to
+plot only 1 of the curves.  Also, change the default transform to 'identity'
+for counting processes since the KM gives an error message.  (I really need
+to get the KM-for-counting-process functionality added.)
+
+1/6/96:  Change the print.coxph and summary.coxph functions.  When the
+coefficient vector contains NAs, then the degrees of freedom should not
+count them nor should the Wald test include them.
+
+1/7/96: Major improvement to survdiff, based on concerns of Sarah Lewington.
+The code now can do stratified tests, and the output structure has more
+information.  Also, we now correctly handle one special case: if one of the
+groups is entirely censored before the first death, then expected=0 for that
+group and the actual degrees of freedom for the test should be one less.
+(This same case gives an NA coefficient in coxph).  Added 'difftest.s' to
+the test suite to validate both this special case and the stratified log-rank.
+
+2/24/96: Fix bug in coxfit2.c --- with an offset term the loglik was not
+computed correctly.  (Everything else was ok-- betas, var, solution, even
+the LR test).  The number was off by the constant:
+	sum(status*(offset- mean(offset)))    #status=0 for alive
+This only effected the standard models with Efron or Breslow approximation,
+counting process and exact likelihood code didn't have the mistake.
+
+2/25/96: Tiny change to the spacing of an error message in coxph.fit.
+
+4/14/96: Update is.ratetable with a verbose option.  This is useful when
+creating a new rate table.
+
+6/5/96:  Changes posted to Statsci with one exception: the ICC is commented
+out of coxph.  I think it needs more testing and explanation before I 
+release it --- the computation is correct, but what does it really mean?
+
+7/10/96: Minor fixes to format.Surv (add ... arg) and print.coxph (different
+digits default), per suggestions of Steve Kaluzny.
+
+7/29/96: Add the 'expected' option to pyears.  Also add the test file
+pyear1.s, change 'summ' to 'summary' in the output structure, and update
+the documentation.
+
+8/13/96: Add the ... arg to plot.cox.zph.s, so that things like "ylim" can
+be passed in.  This should have been there from the beginning.
+
+8/30/96: Add m$singular.ok <- NULL to coxph.s (couldn't pass the singular.ok
+arg to coxph).  Minor bug found by Frank Harrell.
+
+9/17/96: Fix survfit bug found by Kenneth Hess.  If the first event
+was not a death, then the modified lower limits were incorrect.  (The
+message "Length of longer object is not a multiple of the length of
+the shorter object..." is the clue that something didn't match).
+

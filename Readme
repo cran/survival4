@@ -1,0 +1,26 @@
+   This is release 4 of a survival package for S and Splus.
+
+	Terry M Therneau
+	Mayo Clinic
+
+    Copyright Mayo Foundation for Medical Education and Research
+    1994, all rights reserved
+
+The main additions of this over release 3 are --
+
+   * can handle correlated error Cox models, by adding a simple "cluster()"
+directive to the model statement,
+
+   * can explore time-dependent coefficient models, using cox.zph(),
+
+   * expanded methods for expected survival,
+
+   * allow case weights, which are used in some methods to handle missing
+values,
+
+   * expanded methods for expected survival, either based on national rates or
+a prior Cox model fit,
+
+   * a host of minor bug fixes.
+
+The details can be found in the Changelog file.
